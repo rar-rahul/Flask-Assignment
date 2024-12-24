@@ -31,8 +31,13 @@
                     {% if current_user.is_authenticated %}
                         <!-- Show Logout link if user is logged in -->
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('create_job') }}">Job creation</a>
+                        </li>
+
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
                         </li>
+
                     {% else %}
                         <!-- Show Login link if user is logged out -->
                         <li class="nav-item">

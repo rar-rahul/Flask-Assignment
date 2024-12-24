@@ -3,6 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin,LoginManager, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
 from datetime import datetime
+import os
+from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
 
@@ -17,13 +20,48 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'pdf', 'docx', 'jpg', 'png'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Helper function to check allowed file extensions
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 class User(UserMixin, db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(50), nullable=False, default="user")
 
+class JobListing(db.Model):
+    __tablename__ = 'job_listings'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    pay_rate = db.Column(db.Float, nullable=False)
+    location = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('job_listings', lazy=True))
+
+class Application(db.Model):
+    __tablename__ = 'proposals'
+
+    id = db.Column(db.Integer, primary_key=True)
+    cover_letter = db.Column(db.Text, nullable=False)
+    resume = db.Column(db.String(120), nullable=False) 
+    supporting_documents = db.Column(db.String(120))  
+    job_id = db.Column(db.Integer, db.ForeignKey('job_listings.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    job = db.relationship('JobListing', backref=db.backref('proposals', lazy=True))
+    user = db.relationship('User', backref=db.backref('proposals', lazy=True))
 
 # Create all the tables 
 with app.app_context():
@@ -79,10 +117,91 @@ def logout():
     return redirect(url_for('home'))
 
 
+
+#Job creation and listing
+
 @app.route('/job-listing')
 def jobListing():
-    return render_template('joblist.html')
+   job_listings = JobListing.query.all()  
+   return render_template('joblist.html', job_listings=job_listings)
 
+
+@app.route("/job-creation",methods=["GET", "POST"])
+@login_required
+def create_job():
+
+    if request.method == "POST":
+        # Get data from form
+        title = request.form['title']
+        description = request.form['description']
+        pay_rate = request.form['pay_rate']
+        location = request.form['location']
+        category = request.form['category']
+
+        # Create a new job listing and add it to the database
+        new_job = JobListing(
+            title=title,
+            description=description,
+            pay_rate=float(pay_rate),
+            location=location,
+            category=category,
+            user_id=current_user.id  
+        )
+
+        db.session.add(new_job)
+        db.session.commit()
+
+        print(new_job)
+
+        flash('Job created successfully!', 'success')
+        return redirect(url_for('jobListing')) 
+
+    return render_template('job_create_form.html')
+
+
+@app.route('/apply/<int:job_id>', methods=["GET", "POST"])
+@login_required
+def apply_for_job(job_id):
+    job = JobListing.query.get_or_404(job_id)
+
+    if request.method == 'POST':
+        # Get form data
+        cover_letter = request.form['cover_letter']
+
+        # Get resume file
+        resume = request.files['resume']
+        if resume and allowed_file(resume.filename):
+            resume_filename = secure_filename(resume.filename)
+            resume_path = os.path.join(app.config['UPLOAD_FOLDER'], resume_filename)
+            resume.save(resume_path)
+
+        # Get supporting documents (if any)
+        supporting_documents = request.files.getlist('supporting_documents[]')
+        supporting_docs_paths = []
+        for doc in supporting_documents:
+            if doc and allowed_file(doc.filename):
+                doc_filename = secure_filename(doc.filename)
+                doc_path = os.path.join(app.config['UPLOAD_FOLDER'], doc_filename)
+                doc.save(doc_path)
+                supporting_docs_paths.append(doc_path)
+
+        # Create a new proposal entry
+        new_proposal = Application(
+            cover_letter=cover_letter,
+            resume=resume_filename,
+            supporting_documents=";".join(supporting_docs_paths) if supporting_docs_paths else None,
+            job_id=job.id,
+            user_id=current_user.id
+        )
+
+        db.session.add(new_proposal)
+        db.session.commit()
+
+        flash('Your application has been submitted!', 'success')
+        return redirect(url_for('jobListing'))
+
+
+    return render_template('job_apply_form.html', job=job)
 
 
 

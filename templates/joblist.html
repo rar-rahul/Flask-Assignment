@@ -8,102 +8,25 @@
 
         <div class="row">
             <!-- Job Listing 1 -->
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Software Engineer</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">TechCorp Inc.</h6>
-                        <p class="card-text"><strong>Location:</strong> San Francisco, CA</p>
-                        <p class="card-text">We are looking for a passionate Software Engineer to join our team and help build innovative software solutions.</p>
-                        <a href="#" class="btn btn-primary">Apply Now</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Job Listing 2 -->
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Product Manager</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">InnovateX</h6>
-                        <p class="card-text"><strong>Location:</strong> New York, NY</p>
-                        <p class="card-text">As a Product Manager, you will lead cross-functional teams to deliver product solutions that delight our customers.</p>
-                        <a href="#" class="btn btn-primary">Apply Now</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Job Listing 3 -->
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">UX Designer</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Creative Solutions</h6>
-                        <p class="card-text"><strong>Location:</strong> Remote</p>
-                        <p class="card-text">We're seeking a talented UX Designer to create intuitive and visually appealing user interfaces for our products.</p>
-                        <a href="#" class="btn btn-primary">Apply Now</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Job Listing 4 -->
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Marketing Specialist</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Global Marketing</h6>
-                        <p class="card-text"><strong>Location:</strong> Chicago, IL</p>
-                        <p class="card-text">Join our marketing team to design and execute campaigns that engage customers and drive business growth.</p>
-                        <a href="#" class="btn btn-primary">Apply Now</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Job Listing 5 -->
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Data Analyst</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">DataSmart Solutions</h6>
-                        <p class="card-text"><strong>Location:</strong> Austin, TX</p>
-                        <p class="card-text">We are looking for a skilled Data Analyst to analyze and interpret complex data to drive business decisions.</p>
-                        <a href="#" class="btn btn-primary">Apply Now</a>
-                    </div>
-                </div>
-            </div>
-
+            
+            {% for job in job_listings %}
             <!-- Job Listing 6 -->
             <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Web Developer</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">WebWorks</h6>
-                        <p class="card-text"><strong>Location:</strong> Remote</p>
-                        <p class="card-text">Join our web development team to build dynamic websites and web applications for clients across various industries.</p>
-                        <a href="#" class="btn btn-primary">Apply Now</a>
+                        <h5 class="card-title">{{job.title}}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{job.pay_rate}}</h6>
+                        <p class="card-text"><strong>Location:</strong> {{job.location}}</p>
+                        <p class="card-text">{{job.description}}</p>
+                        <a href="{{ url_for('apply_for_job', job_id=job.id) }}" class="btn btn-primary">Apply</a>
                     </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
 
-        <!-- Pagination (optional) -->
-        <nav aria-label="Page navigation example">
-            <ul class="pagination justify-content-center">
-                <li class="page-item">
-                    <a class="page-link" href="#" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-                <li class="page-item"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                    <a class="page-link" href="#" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+
+       
     </div>
 
     {% endblock %}
