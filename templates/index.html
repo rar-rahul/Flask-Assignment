@@ -1,0 +1,9 @@
+{% extends 'layout.html' %}
+
+{% block title %}Home - Job Portal{% endblock %}
+
+{% block content %}
+    <h1 class="my-5">Welcome to Job Portal</h1>
+    <p>Find your dream job or post a job to hire talented professionals!</p>
+    <a class="btn btn-primary" href="{{ url_for('home') }}">Browse Job Listings</a>
+{% endblock %}
