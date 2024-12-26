@@ -6,11 +6,10 @@ from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
 
-
+#configuration
 app = Flask(__name__)
-
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///user.db"
-#app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:root@localhost/user_db"
+#app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:root@localhost/freelance_db"
 app.secret_key = "this-is-my-secreste-key"
 
 db = SQLAlchemy(app)
@@ -18,7 +17,7 @@ bcrypt = Bcrypt(app)
 # Initialize LoginManager
 login_manager = LoginManager()
 login_manager.init_app(app)
-
+##
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'jpg', 'png'}
@@ -38,6 +37,9 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(50), nullable=False, default="user")
 
+    # job_applications = db.relationship('Application', backref='user', lazy=True)
+    # job_listings = db.relationship('JobListing', backref='user', lazy=True)
+
 class JobListing(db.Model):
     __tablename__ = 'job_listings'
     id = db.Column(db.Integer, primary_key=True)
@@ -48,7 +50,7 @@ class JobListing(db.Model):
     category = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    user = db.relationship('User', backref=db.backref('job_listings', lazy=True))
+    # user = db.relationship('User', backref=db.backref('job_listings', lazy=True))
 
 class Application(db.Model):
     __tablename__ = 'proposals'
@@ -59,7 +61,7 @@ class Application(db.Model):
     supporting_documents = db.Column(db.String(120))  
     job_id = db.Column(db.Integer, db.ForeignKey('job_listings.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    
+   # created_at = db.Column(db.DateTime, default=datetime.utcnow)
     job = db.relationship('JobListing', backref=db.backref('proposals', lazy=True))
     user = db.relationship('User', backref=db.backref('proposals', lazy=True))
 
@@ -120,10 +122,31 @@ def logout():
 
 #Job creation and listing
 
-@app.route('/job-listing')
+@app.route('/job-listing',methods=['GET'])
 def jobListing():
-   job_listings = JobListing.query.all()  
-   return render_template('joblist.html', job_listings=job_listings)
+   
+    keywords = request.args.get('keywords', '')
+    category = request.args.get('category', '')
+    location = request.args.get('location', '')
+    sort_by = request.args.get('sort_by', 'date_posted')
+
+    # Build the query based on the parameters
+    query = JobListing.query
+
+    if keywords:
+        query = query.filter(JobListing.title.contains(keywords) | JobListing.description.contains(keywords))
+    
+    if category:
+        query = query.filter(JobListing.category == category)
+    
+    if location:
+        query = query.filter(JobListing.location.contains(location))
+
+    jobs = query.all()
+
+
+    #job_listings = JobListing.query.all()  
+    return render_template('joblist.html', job_listings=jobs)
 
 
 @app.route("/job-creation",methods=["GET", "POST"])
@@ -175,7 +198,7 @@ def apply_for_job(job_id):
             resume_path = os.path.join(app.config['UPLOAD_FOLDER'], resume_filename)
             resume.save(resume_path)
 
-        # Get supporting documents (if any)
+        # supporting documents 
         supporting_documents = request.files.getlist('supporting_documents[]')
         supporting_docs_paths = []
         for doc in supporting_documents:
@@ -202,6 +225,54 @@ def apply_for_job(job_id):
 
 
     return render_template('job_apply_form.html', job=job)
+
+
+# Profile section
+@app.route('/profile/', methods=["GET", "POST"])
+def profile():
+    user = current_user  
+
+    # Fetch the user's job applications, job listings, and payment history
+    job_applications = Application.query.filter_by(user_id=user.id).all()
+    job_listings = JobListing.query.filter_by(user_id=user.id).all()
+   
+    return render_template('profile.html', user=user, 
+                           job_applications=job_applications, 
+                           job_listings=job_listings,
+                           )
+
+
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    user = current_user
+
+    if request.method == 'POST':
+        
+        user.name = request.form['name']
+        user.email = request.form['email']
+        
+        db.session.commit()
+
+        return redirect(url_for('profile'))
+
+    return render_template('edit_profile.html', user=user)
+
+
+@app.route('/profile/job_applications')
+@login_required
+def job_applications():
+    user = current_user
+    applications = Application.query.filter_by(user_id=user.id).all()
+    return render_template('job_applications.html', applications=applications)
+
+@app.route('/profile/job_listings')
+@login_required
+def job_listings():
+    user = current_user
+    listings = JobListing.query.filter_by(user_id=user.id).all()
+    return render_template('job_listings.html', listings=listings)
 
 
 

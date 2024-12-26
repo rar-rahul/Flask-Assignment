@@ -7,6 +7,17 @@
         <h2 class="text-center mb-4">Job Listings</h2>
 
         <div class="row">
+            
+
+            <div class="d-flex justify-content-end">
+                <form method="GET" action="{{ url_for('jobListing') }}">
+                    <select class="form-select" name="sort_by">
+                        <option value="date_posted" {% if request.args.get('sort_by') == 'date_posted' %}selected{% endif %}>Sort by Date Posted</option>
+                        <option value="pay_rate" {% if request.args.get('sort_by') == 'pay_rate' %}selected{% endif %}>Sort by Pay Rate</option>
+                    </select>
+                    <button class="btn btn-outline-primary ms-2" type="submit">Sort</button>
+                </form>
+            </div>
             <!-- Job Listing 1 -->
             
             {% for job in job_listings %}
@@ -15,7 +26,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">{{job.title}}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">{{job.pay_rate}}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted">Rate:-{{job.pay_rate}}</h6>
                         <p class="card-text"><strong>Location:</strong> {{job.location}}</p>
                         <p class="card-text">{{job.description}}</p>
                         <a href="{{ url_for('apply_for_job', job_id=job.id) }}" class="btn btn-primary">Apply</a>
