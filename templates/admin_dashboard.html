@@ -1,0 +1,101 @@
+{% extends 'layout.html' %}
+
+{% block title %}Admin - Dashboard{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+
+        <h2 class="text-center mb-4">Admin Dashboard</h2>
+
+        <!-- Job Listings Section -->
+        <h3>Job Listings</h3>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in job_listings %}
+                <tr>
+                    <td>{{ job.title }}</td>
+                    <td>{{ job.status if job.status else 'Pending' }}</td>
+                    <td>
+                        {% if not job.status == "Approved" %}
+                        <form method="POST" action="{{ url_for('approve_job', job_id=job.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('reject_job', job_id=job.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+
+         <!-- Job Application Section -->
+         <h3>Proposal Listings</h3>
+         <table class="table table-bordered table-striped">
+             <thead>
+                 <tr>
+                    
+                     <th>Status</th>
+                     <th>Actions</th>
+                 </tr>
+             </thead>
+             <tbody>
+                 {% for application in job_applications %}
+                 <tr>
+                    
+                     <td>{{ application.status if application.status else 'Pending' }}</td>
+                     <td>
+                         {% if not application.status == "Approved" %}
+                         <form method="POST" action="{{ url_for('approve_proposal', app_id=application.id) }}" class="d-inline">
+                             <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                         </form>
+                         <form method="POST" action="{{ url_for('reject_proposal', app_id=application.id) }}" class="d-inline">
+                             <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                         </form>
+                         {% endif %}
+                     </td>
+                 </tr>
+                 {% endfor %}
+             </tbody>
+         </table>
+
+        <!-- Users Section -->
+        <h3>Users</h3>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('deactivate_user', user_id=user.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-warning btn-sm">Deactivate</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+    {% endblock %}

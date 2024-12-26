@@ -5,11 +5,14 @@ from flask_bcrypt import Bcrypt
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
+import pymysql
+pymysql.install_as_MySQLdb()
 
 #configuration
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///user.db"
-#app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:root@localhost/freelance_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///jobportal1.db"
+#app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:root@localhost:3306/freelance_db"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = "this-is-my-secreste-key"
 
 db = SQLAlchemy(app)
@@ -35,6 +38,7 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(50), default='Active')
     role = db.Column(db.String(50), nullable=False, default="user")
 
     # job_applications = db.relationship('Application', backref='user', lazy=True)
@@ -49,6 +53,7 @@ class JobListing(db.Model):
     location = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50), default='pending')
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     # user = db.relationship('User', backref=db.backref('job_listings', lazy=True))
 
@@ -61,7 +66,8 @@ class Application(db.Model):
     supporting_documents = db.Column(db.String(120))  
     job_id = db.Column(db.Integer, db.ForeignKey('job_listings.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-   # created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50), default='pending')
     job = db.relationship('JobListing', backref=db.backref('proposals', lazy=True))
     user = db.relationship('User', backref=db.backref('proposals', lazy=True))
 
@@ -86,10 +92,20 @@ def register():
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
+
+        user_exists = User.query.filter_by(email=email).first()
+        if user_exists:
+            flash("Email already exists.", "danger")
+            return redirect(url_for('register'))
         #hash password using bcrypt
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-        new_user = User(name=name, email=email, password=hashed_password)
+        if User.query.count() == 0:
+            role = 'admin'
+        else:
+            role = 'user'
+
+        new_user = User(name=name, email=email, password=hashed_password,role=role)
         db.session.add(new_user)
         db.session.commit()
         flash('You Have Successfully Registered with US!', 'success')
@@ -130,7 +146,6 @@ def jobListing():
     location = request.args.get('location', '')
     sort_by = request.args.get('sort_by', 'date_posted')
 
-    # Build the query based on the parameters
     query = JobListing.query
 
     if keywords:
@@ -185,19 +200,20 @@ def create_job():
 @app.route('/apply/<int:job_id>', methods=["GET", "POST"])
 @login_required
 def apply_for_job(job_id):
+
+    if not current_user.is_authenticated:
+        flash('You must be logged in to apply for a job.', 'danger')
+        return redirect(url_for('login')) 
+
     job = JobListing.query.get_or_404(job_id)
 
     if request.method == 'POST':
-        # Get form data
         cover_letter = request.form['cover_letter']
-
-        # Get resume file
         resume = request.files['resume']
         if resume and allowed_file(resume.filename):
             resume_filename = secure_filename(resume.filename)
             resume_path = os.path.join(app.config['UPLOAD_FOLDER'], resume_filename)
             resume.save(resume_path)
-
         # supporting documents 
         supporting_documents = request.files.getlist('supporting_documents[]')
         supporting_docs_paths = []
@@ -232,7 +248,6 @@ def apply_for_job(job_id):
 def profile():
     user = current_user  
 
-    # Fetch the user's job applications, job listings, and payment history
     job_applications = Application.query.filter_by(user_id=user.id).all()
     job_listings = JobListing.query.filter_by(user_id=user.id).all()
    
@@ -242,37 +257,106 @@ def profile():
                            )
 
 
-
 @app.route('/profile/edit', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
     user = current_user
 
     if request.method == 'POST':
-        
         user.name = request.form['name']
         user.email = request.form['email']
-        
         db.session.commit()
-
         return redirect(url_for('profile'))
 
     return render_template('edit_profile.html', user=user)
 
 
-@app.route('/profile/job_applications')
+####### Admin Panel ####
+@app.route('/admin')
 @login_required
-def job_applications():
-    user = current_user
-    applications = Application.query.filter_by(user_id=user.id).all()
-    return render_template('job_applications.html', applications=applications)
+def admin_dashboard():
+    if not current_user.role == 'admin':
+        return redirect(url_for('home')) 
+    
+    job_listings = JobListing.query.all()  
+    users = User.query.all() 
+    job_applications = Application.query.all()
+   
+    return render_template('admin_dashboard.html', job_listings=job_listings, users=users,job_applications=job_applications)
 
-@app.route('/profile/job_listings')
+
+@app.route('/admin/approve_job/<int:job_id>', methods=['POST'])
 @login_required
-def job_listings():
-    user = current_user
-    listings = JobListing.query.filter_by(user_id=user.id).all()
-    return render_template('job_listings.html', listings=listings)
+def approve_job(job_id):
+    if not current_user.role == 'admin':
+        return redirect(url_for('home'))
+
+    job = JobListing.query.get_or_404(job_id)
+    job.status = "Approved"  # Mark the job listing as approved
+    db.session.commit()
+
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/reject_job/<int:job_id>', methods=['POST'])
+@login_required
+def reject_job(job_id):
+    if not current_user.role == 'admin':
+        return redirect(url_for('home'))
+
+    job = JobListing.query.get_or_404(job_id)
+    job.status = "Rejected"  # Mark the job listing as rejected
+    db.session.commit()
+
+    return redirect(url_for('admin_dashboard')) 
+
+@app.route('/admin/approve_proposal/<int:app_id>', methods=['POST'])
+@login_required
+def approve_proposal(job_id):
+    if not current_user.role == 'admin':
+        return redirect(url_for('home'))
+
+    application = Application.query.get_or_404(job_id)
+    application.status = "Approved"  # Mark the job listing as approved
+    db.session.commit()
+
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/reject_proposal/<int:app_id>', methods=['POST'])
+@login_required
+def reject_proposal(job_id):
+    if not current_user.role == 'admin':
+        return redirect(url_for('home'))
+
+    application = Application.query.get_or_404(job_id)
+    application.status = "Rejected"  # Mark the job listing as rejected
+    db.session.commit()
+
+    return redirect(url_for('admin_dashboard')) 
+
+
+@app.route('/admin/deactivate_user/<int:user_id>', methods=['POST'])
+@login_required
+def deactivate_user(user_id):
+    if not current_user.role == 'admin':
+        return redirect(url_for('home'))
+
+    user = User.query.get_or_404(user_id)
+    user.status = "Deactive"  # Deactivate the user account
+    db.session.commit()
+
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.role == 'admin':
+        return redirect(url_for('home'))
+
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+
+    return redirect(url_for('admin_dashboard'))
 
 
 

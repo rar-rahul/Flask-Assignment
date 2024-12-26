@@ -20,7 +20,7 @@
             <ul class="list-group">
                 {% for application in job_applications %}
                     <li class="list-group-item">
-                        <strong>{{ application.job.title }}</strong> - Applied on 
+                        <strong>{{ application.job.title }}</strong> - Applied on {{created_at}}
                     </li>
                 {% endfor %}
             </ul>

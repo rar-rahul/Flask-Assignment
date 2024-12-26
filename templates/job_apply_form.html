@@ -6,26 +6,28 @@
    
     
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-6 mt-5 mb-5">
     <h1>Apply for Job: {{ job.title }}</h1>
+    <div class="card shadow-sm border-0 p-4">
     <form method="POST" enctype="multipart/form-data">
-        <div class="form-group">
+        <div class="form-group mb-2">
             <label for="cover_letter">Cover Letter</label>
             <textarea class="form-control" id="cover_letter" name="cover_letter" rows="5" required></textarea>
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-2">
             <label for="resume">Upload Resume (PDF, DOCX)</label>
             <input type="file" class="form-control-file" id="resume" name="resume" accept=".pdf, .docx" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-2">
             <label for="supporting_documents">Upload Supporting Documents (Optional)</label>
             <input type="file" class="form-control-file" id="supporting_documents" name="supporting_documents[]" accept=".pdf, .docx, .jpg, .png" multiple>
         </div>
 
         <button type="submit" class="btn btn-primary">Submit Application</button>
     </form>
+    </div>
 </div>
 </div>
 </div>
