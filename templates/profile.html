@@ -17,6 +17,7 @@
     <div class="row mb-4">
         <div class="col-md-12">
             <h3>Job Applications</h3>
+            {% if job_applications %}
             <ul class="list-group">
                 {% for application in job_applications %}
                     <li class="list-group-item">
@@ -24,13 +25,20 @@
                     </li>
                 {% endfor %}
             </ul>
+            {% else %}
+             <!-- No job listings found -->
+             <div class="col-12 text-center">
+                <h4>No job application found at the moment.</h4>
+            </div>
+        {% endif %}
         </div>
     </div>
 
     <!-- Job Listings Section -->
     <div class="row mb-4">
         <div class="col-md-12">
-            <h3>Job Listings</h3>
+            <h3>Job Listings</h3> 
+            {% if job_listings %}
             <ul class="list-group">
                 {% for listing in job_listings %}
                     <li class="list-group-item">
@@ -38,6 +46,12 @@
                     </li>
                 {% endfor %}
             </ul>
+            {% else %}
+              <!-- No job listings found -->
+              <div class="col-12 text-center">
+                <h4>No job listings found at the moment.</h4>
+            </div>
+        {% endif %}
         </div>
     </div>
 

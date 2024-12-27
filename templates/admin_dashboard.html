@@ -23,14 +23,12 @@
                     <td>{{ job.title }}</td>
                     <td>{{ job.status if job.status else 'Pending' }}</td>
                     <td>
-                        {% if not job.status == "Approved" %}
                         <form method="POST" action="{{ url_for('approve_job', job_id=job.id) }}" class="d-inline">
                             <button type="submit" class="btn btn-success btn-sm">Approve</button>
                         </form>
                         <form method="POST" action="{{ url_for('reject_job', job_id=job.id) }}" class="d-inline">
                             <button type="submit" class="btn btn-danger btn-sm">Reject</button>
                         </form>
-                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -54,14 +52,14 @@
                     
                      <td>{{ application.status if application.status else 'Pending' }}</td>
                      <td>
-                         {% if not application.status == "Approved" %}
+                        
                          <form method="POST" action="{{ url_for('approve_proposal', app_id=application.id) }}" class="d-inline">
                              <button type="submit" class="btn btn-success btn-sm">Approve</button>
                          </form>
                          <form method="POST" action="{{ url_for('reject_proposal', app_id=application.id) }}" class="d-inline">
                              <button type="submit" class="btn btn-danger btn-sm">Reject</button>
                          </form>
-                         {% endif %}
+                         
                      </td>
                  </tr>
                  {% endfor %}

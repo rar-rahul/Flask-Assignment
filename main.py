@@ -12,7 +12,6 @@ pymysql.install_as_MySQLdb()
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///jobportal1.db"
 #app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:root@localhost:3306/freelance_db"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = "this-is-my-secreste-key"
 
 db = SQLAlchemy(app)
@@ -24,7 +23,6 @@ login_manager.init_app(app)
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'jpg', 'png'}
-
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Helper function to check allowed file extensions
@@ -32,6 +30,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+# Defining classes here 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -40,9 +39,6 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100), nullable=False)
     status = db.Column(db.String(50), default='Active')
     role = db.Column(db.String(50), nullable=False, default="user")
-
-    # job_applications = db.relationship('Application', backref='user', lazy=True)
-    # job_listings = db.relationship('JobListing', backref='user', lazy=True)
 
 class JobListing(db.Model):
     __tablename__ = 'job_listings'
@@ -55,7 +51,7 @@ class JobListing(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(50), default='pending')
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    # user = db.relationship('User', backref=db.backref('job_listings', lazy=True))
+   
 
 class Application(db.Model):
     __tablename__ = 'proposals'
@@ -74,6 +70,8 @@ class Application(db.Model):
 # Create all the tables 
 with app.app_context():
     db.create_all()
+
+
 
 
 @login_manager.user_loader
@@ -136,8 +134,7 @@ def logout():
 
 
 
-#Job creation and listing
-
+#Job creation and listing routes
 @app.route('/job-listing',methods=['GET'])
 def jobListing():
    
@@ -176,7 +173,6 @@ def create_job():
         location = request.form['location']
         category = request.form['category']
 
-        # Create a new job listing and add it to the database
         new_job = JobListing(
             title=title,
             description=description,
@@ -243,7 +239,7 @@ def apply_for_job(job_id):
     return render_template('job_apply_form.html', job=job)
 
 
-# Profile section
+# Profile section routes
 @app.route('/profile/', methods=["GET", "POST"])
 def profile():
     user = current_user  
@@ -311,11 +307,11 @@ def reject_job(job_id):
 
 @app.route('/admin/approve_proposal/<int:app_id>', methods=['POST'])
 @login_required
-def approve_proposal(job_id):
+def approve_proposal(app_id):
     if not current_user.role == 'admin':
         return redirect(url_for('home'))
 
-    application = Application.query.get_or_404(job_id)
+    application = Application.query.get_or_404(app_id)
     application.status = "Approved"  # Mark the job listing as approved
     db.session.commit()
 
@@ -323,11 +319,11 @@ def approve_proposal(job_id):
 
 @app.route('/admin/reject_proposal/<int:app_id>', methods=['POST'])
 @login_required
-def reject_proposal(job_id):
+def reject_proposal(app_id):
     if not current_user.role == 'admin':
         return redirect(url_for('home'))
 
-    application = Application.query.get_or_404(job_id)
+    application = Application.query.get_or_404(app_id)
     application.status = "Rejected"  # Mark the job listing as rejected
     db.session.commit()
 
@@ -357,7 +353,6 @@ def delete_user(user_id):
     db.session.commit()
 
     return redirect(url_for('admin_dashboard'))
-
 
 
 

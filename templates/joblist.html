@@ -20,8 +20,8 @@
         <div class="row">
             
 
-            <div class="d-flex justify-content-end">
-                <form method="GET" action="{{ url_for('jobListing') }}">
+            <div class="d-flex justify-content-end align-items-center mb-3">
+                <form method="GET" action="{{ url_for('jobListing') }}" class="d-flex">
                     <select class="form-select" name="sort_by">
                         <option value="date_posted" {% if request.args.get('sort_by') == 'date_posted' %}selected{% endif %}>Sort by Date Posted</option>
                         <option value="pay_rate" {% if request.args.get('sort_by') == 'pay_rate' %}selected{% endif %}>Sort by Pay Rate</option>
@@ -29,22 +29,32 @@
                     <button class="btn btn-outline-primary ms-2" type="submit">Sort</button>
                 </form>
             </div>
-            <!-- Job Listing 1 -->
             
+            <!-- Job Listing 1 -->
+            {% if job_listings %}
+            <!-- Display job listings -->
             {% for job in job_listings %}
-            <!-- Job Listing 6 -->
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">{{job.title}}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Rate:-{{job.pay_rate}}</h6>
-                        <p class="card-text"><strong>Location:</strong> {{job.location}}</p>
-                        <p class="card-text">{{job.description}}</p>
-                        <a href="{{ url_for('apply_for_job', job_id=job.id) }}" class="btn btn-primary">Apply</a>
+                <div class="col-md-4 mb-5">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ job.title }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Rate: Rs.{{ job.pay_rate }}</h6>
+                            <p class="card-text"><strong>Location:</strong> {{ job.location }}</p>
+                            <p class="card-text"><strong>Category:</strong> {{ job.category }}</p>
+                            <p class="card-text"><strong>Posted on:</strong> {{ job.created_at }}</p>
+                            <p class="card-text">{{ job.description }}</p>
+                            <a href="{{ url_for('apply_for_job', job_id=job.id) }}" class="btn btn-success">Apply Job</a>
+                        </div>
                     </div>
                 </div>
-            </div>
             {% endfor %}
+        {% else %}
+            <!-- No job listings found -->
+            <div class="col-12 text-center">
+                <h4>No job listings found at the moment.</h4>
+            </div>
+        {% endif %}
+        
         </div>
 
 

@@ -30,11 +30,23 @@
                 </ul>
     
                 <ul class="navbar-nav ms-auto">  <!-- Align the right side items -->
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('jobListing') }}">Job Listing</a>
+                    </li>
                     {% if current_user.is_authenticated %}
                         <!-- Show Logout link and profile if user is logged in -->
+                        {% if current_user.role == 'user' %}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
                         </li>
+                        {% endif %}
+
+                        {% if current_user.role == 'admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+                        </li>
+                        {% endif %}
     
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('create_job') }}">Job creation</a>
@@ -46,9 +58,7 @@
     
                     {% else %}
                         <!-- Show Login and Register if user is logged out -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('jobListing') }}">Job Listing</a>
-                        </li>
+                       
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('login') }}">Login</a>
                         </li>
