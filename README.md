@@ -10,13 +10,12 @@ git clone https://github.com/rar-rahul/Flask-Assignment.git
 cd Flask-Assignment
 
 # Technologies Used
-Flask: Web framework for building the application
-Flask-SQLAlchemy: ORM for database management
-Flask-Bcrypt: For password hashing and security
-Flask-Login: User session management and authentication
-MySQL: Database (used via pymysql)
-Flask-WTF: Forms handling and validation
-Werkzeug: File handling (used for saving resumes and supporting documents)
+ 1.Flask: Web framework for building the application
+ 2.Flask-SQLAlchemy: ORM for database management
+ 3.Flask-Bcrypt: For password hashing and security
+ 4.Flask-Login: User session management and authentication
+ 5.MySQL: Database (used via pymysql)  | sqllite for development purpose
+ 6.Werkzeug: File handling (used for saving resumes and supporting documents)
 
 # Features
 User registration and login
